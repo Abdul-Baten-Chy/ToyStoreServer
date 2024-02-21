@@ -30,6 +30,10 @@ async function run() {
       const result = await productCollections.find().toArray();
       res.send(result);
     });
+    app.get("/cart", async (req, res) => {
+      const result = await productInCart.find().toArray();
+      res.send(result);
+    });
     app.get("/products/:category", async (req, res) => {
       const category = req.params.category;
       const query = { category: category };
@@ -39,6 +43,7 @@ async function run() {
     app.post("/cart", async (req, res) => {
       const cartItem = req.body;
       const result = await productInCart.insertOne(cartItem);
+      console.log(result);
       res.send(result);
     });
 
