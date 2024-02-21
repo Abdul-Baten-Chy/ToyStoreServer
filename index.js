@@ -1,7 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 const app = express();
 
 app.use(cors());
@@ -30,6 +30,11 @@ async function run() {
       const result = await productCollections.find().toArray();
       res.send(result);
     });
+    app.post("/products", async (req, res) => {
+      const newProduct = req.body;
+      const result = await productCollections.insertOne(newProduct);
+      res.send(result);
+    });
     app.get("/cart", async (req, res) => {
       const result = await productInCart.find().toArray();
       res.send(result);
@@ -46,55 +51,45 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+    app.delete("/cart/:id", async (req, res) => {
+      const cartId = req.params.id;
+      const query = { _id: new ObjectId(cartId) };
+      console.log(query);
+      const result = await productInCart.deleteOne(query);
+      res.send(result);
+    });
 
-    // app.patch("/users/hr/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   const user = await userCollections.findOne(query);
+    app.get("/productsbyId/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollections.findOne(query);
+      res.send(result);
+    });
 
-    //   const updatedDoc = {
-    //     $set: {
-    //       role: "Hr Manager",
-    //     },
-    //   };
-    //   const result = await userCollections.updateOne(query, updatedDoc);
-    //   res.send(result);
-    // });
-    // app.patch("/users/fire/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   const user = await userCollections.findOne(query);
-    //   let isFired = user.isFired || false;
-    //   const updatedDoc = {
-    //     $set: {
-    //       isFired: !isFired,
-    //     },
-    //   };
-    //   const result = await userCollections.updateOne(query, updatedDoc);
-    //   res.send(result);
-    // });
+    app.put("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateProductsInfo = req.body;
+      const product = {
+        $set: {
+          name: updateProductsInfo.name,
+          types: updateProductsInfo.category,
+          rating: updateProductsInfo.rating,
+          price: updateProductsInfo.price,
+          image: updateProductsInfo.image,
+          details: updateProductsInfo.details,
+        },
+      };
 
-    // app.patch("/users/verify/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   const user = await userCollections.findOne(query);
-    //   const isVerified = user.isVerified || false;
-    //   const updatedDoc = {
-    //     $set: {
-    //       isVerified: !isVerified,
-    //     },
-    //   };
-    //   const result = await userCollections.updateOne(query, updatedDoc);
-    //   res.send(result);
-    // });
+      const result = await productCollections.updateOne(
+        filter,
+        product,
+        options
+      );
+      res.send(result);
+    });
 
-    // app.post("/users", async (req, res) => {
-    //   const users = req.body;
-    //   const result = await userCollections.insertOne(users);
-    //   res.send(result);
-    // });
-
-    // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
